@@ -44,7 +44,7 @@ from Crypto.Protocol.KDF import PBKDF2
 
 passwordFile = "passwords"
 ##The salt value should be set here.
-salt = 
+salt = "bbj"
 ##The header of the file.
 head = " ____               __  __\n"+"|  _ \ __ _ ___ ___|  \/  | __ _ _ __  \n" +"| |_) / _` / __/ __| |\/| |/ _` | '_ \ \n" +"|  __/ (_| \__ \__ \ |  | | (_| | | | |\n" +"|_|   \__,_|___/___/_|  |_|\__,_|_| |_|\n"
 
@@ -56,29 +56,36 @@ def dictToBytes(dict):
 def bytesToDict(dict):
 	return json.loads(dict.decode('utf-8'))
 
-#reference 2
+
+# reference 2
 def encrypt(dict, k):
 	##Define the encryption scheme here.
-	
+	cipher = AES.new(k, AES.MODE_EAX)
+
 	##Encrypt the dictionary value here.
-	
+	ciphertext, tag = cipher.encrypt_and_digest(dict)
 
 	with open(passwordFile, 'wb') as outfile:
 		[outfile.write(x) for x in (cipher.nonce, tag, ciphertext)]
+
+
 def decrypt(k):
 	with open(passwordFile, 'rb') as infile:
-		nonce, tag, ciphertext = [ infile.read(x) for x in (16, 16, -1) ]
+		nonce, tag, ciphertext = [infile.read(x) for x in (16, 16, -1)]
 		##Define the encryption scheme here.
-	
+		cipher = AES.new(k, AES.MODE_EAX, nonce=nonce)
+
 		##Decrypt the ciphertext here.
-	
+		data = cipher.decrypt(ciphertext)
+
 		return data
+
 
 def Main():
 
 	print("\n\n")
 	mpw = input("Enter Master Password: ")
-	k   = PBKDF2(mpw, salt, dkLen=32) # derive key from password
+	k = PBKDF2(mpw, salt, dkLen=32) # derive key from password
 	
 	# check for password database file
 	if not os.path.isfile(passwordFile):
@@ -89,7 +96,7 @@ def Main():
 		encrypt(newDict, k)
 
 	# check usage
-	if len(sys.argv)  != 2:
+	if len(sys.argv) != 2:
 		print("usage: python pwMan.py <website>")
 		return
 	else:
