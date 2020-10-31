@@ -36,19 +36,25 @@
 # Updated 9 October 2019 by Peyton Pritchard
 # Updated to Python 3.7.4
 
-import csv, os, sys, json
-from Crypto.Hash import SHA256
-from Crypto.Cipher import AES
-from Crypto.Random import get_random_bytes
-from Crypto.Protocol.KDF import PBKDF2
+import csv, os, sys, json, string, random
+from Cryptodome.Hash import SHA256
+from Cryptodome.Cipher import AES
+from Cryptodome.Random import get_random_bytes
+from Cryptodome.Protocol.KDF import PBKDF2
 
 passwordFile = "passwords"
 ##The salt value should be set here.
-salt = "bbj"
+salt = "bcbcjb,kmmdvpasd"
 ##The header of the file.
 head = " ____               __  __\n"+"|  _ \ __ _ ___ ___|  \/  | __ _ _ __  \n" +"| |_) / _` / __/ __| |\/| |/ _` | '_ \ \n" +"|  __/ (_| \__ \__ \ |  | | (_| | | | |\n" +"|_|   \__,_|___/___/_|  |_|\__,_|_| |_|\n"
 
+def generatePass():
+	charset = string.printable
+	passw = ''
+	for x in range(0,17):
+		passw += random.choice(charset)
 
+	return passw
 
 #reference 1
 def dictToBytes(dict):
@@ -85,7 +91,7 @@ def Main():
 
 	print("\n\n")
 	mpw = input("Enter Master Password: ")
-	k = PBKDF2(mpw, salt, dkLen=32) # derive key from password
+	k = PBKDF2(mpw, str.encode(salt), dkLen=32) # derive key from password
 	
 	# check for password database file
 	if not os.path.isfile(passwordFile):
@@ -118,7 +124,8 @@ def Main():
 			print("password: " + str(pws[entry]))
 		else:
 			print("No entry for " + str(entry) + ", creating new...")
-			newPass = input("New entry - enter password for "+entry+": ")
+			newPass = generatePass()
+			print("Generated pass: " + newPass)
 			pws[entry] = newPass
 			encrypt( dictToBytes(pws), k)
 			print("stored")
