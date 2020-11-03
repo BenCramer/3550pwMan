@@ -25,16 +25,17 @@
 # 	No password database, creating....
 # 	Loading database...
 # 	No entry for  Google.com , creating new...
-# 	New entry - enter password for Google.com: pass
+# 	Generated pass: ,e]P5i%{av
 # 	stored
 # $ python pwMan.py Google.com
 # 	Enter Master Password: pass
 # 	Loading database...
 # 	website:   Google.com
-# 	password:  pass
+# 	password:  ,e]P5i%{av
 
 # Updated 9 October 2019 by Peyton Pritchard
 # Updated to Python 3.7.4
+# Edited 2 November 2020 by Ben Cramer, Blake Cox, and Jacob Butler
 
 import csv, os, sys, json, string, random
 from Cryptodome.Hash import SHA256
@@ -48,6 +49,7 @@ salt = "bcbcjb,kmmdvpasd"
 ##The header of the file.
 head = " ____               __  __\n"+"|  _ \ __ _ ___ ___|  \/  | __ _ _ __  \n" +"| |_) / _` / __/ __| |\/| |/ _` | '_ \ \n" +"|  __/ (_| \__ \__ \ |  | | (_| | | | |\n" +"|_|   \__,_|___/___/_|  |_|\__,_|_| |_|\n"
 
+# Generates a random password to be used for a newly-registered site.
 def generatePass():
 	charset = string.printable
 	passw = ''
@@ -56,14 +58,14 @@ def generatePass():
 
 	return passw
 
-#reference 1
+# Converts the dictionary to and from bytes, necessary for encryption/decryption.
 def dictToBytes(dict):
 	return json.dumps(dict).encode('utf-8')
 def bytesToDict(dict):
 	return json.loads(dict.decode('utf-8'))
 
 
-# reference 2
+# Encrypt the dictionary 'dict' using the key 'k' in AES' EAX mode. Writes the encrypted data to the passwordfile.
 def encrypt(dict, k):
 	##Define the encryption scheme here.
 	cipher = AES.new(k, AES.MODE_EAX)
@@ -74,7 +76,7 @@ def encrypt(dict, k):
 	with open(passwordFile, 'wb') as outfile:
 		[outfile.write(x) for x in (cipher.nonce, tag, ciphertext)]
 
-
+# Decrypt the passwordFile with the key 'k' using AES' EAX mode. Returns the bytes of the file.
 def decrypt(k):
 	with open(passwordFile, 'rb') as infile:
 		nonce, tag, ciphertext = [infile.read(x) for x in (16, 16, -1)]
@@ -91,7 +93,7 @@ def Main():
 
 	print("\n\n")
 	mpw = input("Enter Master Password: ")
-	k = PBKDF2(mpw, str.encode(salt), dkLen=32) # derive key from password
+	k = PBKDF2(mpw, str.encode(salt), dkLen=32) # derive key from password using our salt value
 	
 	# check for password database file
 	if not os.path.isfile(passwordFile):
@@ -124,8 +126,11 @@ def Main():
 			print("password: " + str(pws[entry]))
 		else:
 			print("No entry for " + str(entry) + ", creating new...")
+			# Generate a new password for the designated site.
 			newPass = generatePass()
 			print("Generated pass: " + newPass)
+
+			# Add newPass to the dictionary, then encrypt it
 			pws[entry] = newPass
 			encrypt( dictToBytes(pws), k)
 			print("stored")
